@@ -2,8 +2,10 @@ package com.wallacearturtop.dslist.services;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.wallacearturtop.dslist.dto.GameDTO;
 import com.wallacearturtop.dslist.dto.GameMinDTO;
@@ -17,11 +19,23 @@ public class GameService {
 	@Autowired
 	private GameRepository gameRepository;
 	
+	
+	
 	@Transactional(readOnly = true)
 	public GameDTO findById(Long id) {
-		Game result = gameRepository.findById(id).get();
-		return new GameDTO(result);
+	    try {
+	        Game result = gameRepository.findById(id)
+	                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found for ID: " + id));
+	        return new GameDTO(result);
+	    } catch (ResponseStatusException e) {
+	        // Trata o erro 404 explicitamente
+	        throw e;
+	    } catch (Exception e) {
+	        // Trata qualquer outro erro inesperado
+	        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error occurred", e);
+	    }
 	}
+
 	
 	@Transactional(readOnly = true)
 	public List<GameMinDTO> findAll() {		
